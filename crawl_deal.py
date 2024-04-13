@@ -3,21 +3,29 @@ import re
 import time
 import pyshorteners
 from bs4 import BeautifulSoup
-from telegram import Bot
+# from telegram import Bot
 
-TELEGRAM_BOT_TOKEN = '6417926677:AAFpFVg4zGjjytISsI7h5qsg6QHIEophjqc'
-TELEGRAM_CHAT_ID = '7090041263'
+# TELEGRAM_BOT_TOKEN = '6417926677:AAFpFVg4zGjjytISsI7h5qsg6QHIEophjqc'
+# TELEGRAM_CHAT_ID = '7090041263'
 headers = {
             'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
         }
 s = pyshorteners.Shortener()
-source = 'https://www.fmkorea.com'
+source = 'https://www.fmkorea.com/'
 url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc'
 res = requests.get(url, headers=headers, timeout=5)
 res.raise_for_status()
 soup = BeautifulSoup(res.text, 'lxml')
 deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
-print(deals[0])
+# print(deals)
+for deal in deals:
+    deal_link = source + deal.find('a')['href']  # hotdeal의 링크 추출
+    deal_res = requests.get(deal_link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
+    deal_res.raise_for_status()
+    deal_soup = BeautifulSoup(deal_res.text, 'lxml')  # 해당 링크의 HTML 파싱
+    time.sleep(3)
+    # 이후 원하는 정보를 추출하여 사용할 수 있습니다.
+
 
 # for deal in deals:
 #     title = re.sub(r'\[[0-9]{1,4}\]','',deal.find('h3', attrs={'class':'title'}).get_text())
