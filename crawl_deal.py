@@ -14,17 +14,33 @@ s = pyshorteners.Shortener()
 source = 'https://www.fmkorea.com/'
 url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc'
 res = requests.get(url, headers=headers, timeout=5)
+print(res)
 res.raise_for_status()
 soup = BeautifulSoup(res.text, 'lxml')
-deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
-# print(deals)
-for deal in deals:
-    deal_link = source + deal.find('a')['href']  # hotdeal의 링크 추출
-    deal_res = requests.get(deal_link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
-    deal_res.raise_for_status()
-    deal_soup = BeautifulSoup(deal_res.text, 'lxml')  # 해당 링크의 HTML 파싱
-    time.sleep(3)
-    # 이후 원하는 정보를 추출하여 사용할 수 있습니다.
+# print(soup)
+deal = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})[0]
+# 우선 링크만 가져와도되는게 아닐지?
+# print(deals[0])
+# for deal in deals[0]:
+# print(deal)
+deal_link = source + deal.find('a')['href']  # hotdeal별 링크 추출
+deal_res = requests.get(deal_link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
+deal_res.raise_for_status()
+deal_soup = BeautifulSoup(deal_res.text, 'lxml')  # 해당 링크의 HTML 파싱
+# # time.sleep(5)
+with open('deal_html.html', 'w', encoding='utf-8') as file:
+    file.write(str(deal_soup))
+# print(deal_soup)
+# deal_title_name = deal_soup.find_all('span', attrs={'class':'np_18px_span'}).text.strip()
+# print(deal_title_name)
+# deal_url_name = deal_soup.find('a', attrs={'class':'hotdeal_url'}).get_text()
+
+# print(f'''{deal_title_name}, {deal_url_name}''')
+    # deal_product_name = deal_soup.find('h3', attrs={'class':'title'}).get_text()
+    # print(product_name)
+#     # 이후 원하는 정보를 추출하여 사용할 수 있습니다.
+
+
 
 
 # for deal in deals:
