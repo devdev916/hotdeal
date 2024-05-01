@@ -10,26 +10,54 @@ from bs4 import BeautifulSoup
 headers = {
             'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
         }
-s = pyshorteners.Shortener()
+
 source = 'https://www.fmkorea.com/'
-url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc'
+url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc' # 핫딜 게시판 인기탭
 res = requests.get(url, headers=headers, timeout=5)
-print(res)
 res.raise_for_status()
 soup = BeautifulSoup(res.text, 'lxml')
-# print(soup)
-deal = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})[0]
-# 우선 링크만 가져와도되는게 아닐지?
-# print(deals[0])
-# for deal in deals[0]:
-# print(deal)
-deal_link = source + deal.find('a')['href']  # hotdeal별 링크 추출
-deal_res = requests.get(deal_link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
-deal_res.raise_for_status()
-deal_soup = BeautifulSoup(deal_res.text, 'lxml')  # 해당 링크의 HTML 파싱
-# # time.sleep(5)
-with open('deal_html.html', 'w', encoding='utf-8') as file:
-    file.write(str(deal_soup))
+deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
+for deal in deals:
+    try:
+        link = source + deal.find('a')['href']  # hotdeal별 링크 추출
+        res = requests.get(link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, 'lxml')  # 해당 링크의 HTML 파싱
+        title = soup.find_all('span', attrs={'class':'np_18px_span'})[0].get_text() # 핫딜 게시글 제목
+        post_url = soup.find('div', attrs={'class':'document_address'}).find('a')['href'].replace('/', '') # 핫딜 게시글 URL
+        date = soup.find('span', attrs={'class':'date m_no'}).get_text() # 핫딜 등록일
+        table = soup.find('table', attrs={'class':'hotdeal_table'}) # 핫딜 정보 테이블
+        table_info = table.find_all('div', attrs={'class': 'xe_content'})
+        deal_url = table_info[0].find('a', attrs={'class':'hotdeal_url'}).get_text()
+        mall_name = table_info[1].get_text().strip()
+        product_name = table_info[2].get_text()
+        price = table_info[3].get_text()
+        delivery = table_info[4].get_text()
+        # 본문내용
+        main_text = soup.find('div', attrs={'class':re.compile(fr'.*{re.escape(post_url)}.*')})
+        content = re.sub(re.compile(r'<[^>]+>'), '', str(main_text)) # 모든 태그를 제거하는 패턴
+        print(f'''
+                핫딜 : {title}
+                등록일 : {date}
+                게시글URL : {source}{post_url}
+                쇼핑몰 : {mall_name}
+                핫딜URL : {deal_url}
+                상품명/가격/배송 : {product_name}/{price}/{delivery}
+                내용 : {content}
+            ''')
+        time.sleep(90)
+    except IndexError:
+        title = None
+        date = None
+        post_url = None
+        mall_name = None
+        deal_url = None
+        product_name = None
+        price = None
+        delivery = None
+        content = None
+        continue
+
 # print(deal_soup)
 # deal_title_name = deal_soup.find_all('span', attrs={'class':'np_18px_span'}).text.strip()
 # print(deal_title_name)
@@ -40,6 +68,9 @@ with open('deal_html.html', 'w', encoding='utf-8') as file:
     # print(product_name)
 #     # 이후 원하는 정보를 추출하여 사용할 수 있습니다.
 
+    # pattern = re.compile(r'<div>(.*?)</div>')
+    # matches = re.findall(pattern, re.sub(re.compile(r'<br\s*/?>'), '', str(content)))
+            # 본문 : {' '.join([text for text in matches if text.strip()])} 
 
 
 
