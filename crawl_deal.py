@@ -44,8 +44,11 @@ for deal in deals:
                 게시글URL : {source}{post_url}
                 쇼핑몰 : {mall_name}
                 핫딜URL : {deal_url}
-                상품명/가격/배송 : {product_name}/{price}/{delivery}
-                내용 : {content}
+                상품명 : {product_name}
+                가격 : {price}
+                배송 : {delivery}
+                내용 ::
+                {content}
             ''')
         time.sleep(90)
     except IndexError:
