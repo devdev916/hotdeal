@@ -1,8 +1,9 @@
 import requests
 import re
 import time
-import pyshorteners
 from bs4 import BeautifulSoup
+import mysql.connector
+
 # from telegram import Bot
 
 # TELEGRAM_BOT_TOKEN = '6417926677:AAFpFVg4zGjjytISsI7h5qsg6QHIEophjqc'
@@ -25,7 +26,7 @@ for deal in deals:
         soup = BeautifulSoup(res.text, 'lxml')  # 해당 링크의 HTML 파싱
         title = soup.find_all('span', attrs={'class':'np_18px_span'})[0].get_text() # 핫딜 게시글 제목
         category = soup.find('a', attrs={'class':'category'}).get_text()
-        post_url = soup.find('div', attrs={'class':'document_address'}).find('a')['href'].replace('/', '') # 핫딜 게시글 URL
+        id = soup.find('div', attrs={'class':'document_address'}).find('a')['href'].replace('/', '') # 핫딜 게시글 URL
         date = soup.find('span', attrs={'class':'date m_no'}).get_text() # 핫딜 등록일
         table = soup.find('table', attrs={'class':'hotdeal_table'}) # 핫딜 정보 테이블
         table_info = table.find_all('div', attrs={'class': 'xe_content'})
@@ -34,14 +35,15 @@ for deal in deals:
         product_name = table_info[2].get_text() # 핫딜 상품명
         price = table_info[3].get_text() # 핫딜 가격
         delivery = table_info[4].get_text() # 핫딜 배송
+        
         # 본문내용
-        main_text = soup.find('div', attrs={'class':re.compile(fr'.*{re.escape(post_url)}.*')})
+        main_text = soup.find('div', attrs={'class':re.compile(fr'.*{re.escape(id)}.*')})
         content = re.sub(re.compile(r'<[^>]+>'), '', str(main_text)) # 모든 태그를 제거하는 패턴
         print(f'''
                 핫딜 : {title}
                 분류 : {category}
                 등록일 : {date}
-                게시글URL : {source}{post_url}
+                게시글URL : {source}{id}
                 쇼핑몰 : {mall_name}
                 핫딜URL : {deal_url}
                 상품명 : {product_name}
@@ -55,7 +57,7 @@ for deal in deals:
         title = None
         category = None
         date = None
-        post_url = None
+        id = None
         mall_name = None
         deal_url = None
         product_name = None
