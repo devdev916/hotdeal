@@ -83,7 +83,6 @@ def insert_into_mysql(hotdeals, connection):
 
 
 # 텔레그램 
-# from telegram import Bot
 # TELEGRAM_BOT_TOKEN = '6417926677:AAFpFVg4zGjjytISsI7h5qsg6QHIEophjqc'
 # TELEGRAM_CHAT_ID = '7090041263'
 
