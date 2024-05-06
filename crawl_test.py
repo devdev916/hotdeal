@@ -18,7 +18,7 @@ deal_info_table = soup.find('table', attrs={'class':'hotdeal_table'})
 deal_date = soup.find('span', attrs={'class':'date m_no'}).get_text()
 deal_table_values = deal_info_table.find_all('div', attrs={'class': 'xe_content'})
 deal_url = deal_table_values[0].find('a', attrs={'class':'hotdeal_url'}).get_text()
-deal_mall_name = deal_table_values[1].get_text().strip()
+deal_mall_name = re.sub(r"\[.*\]", "", deal_table_values[1].get_text()).strip()
 deal_product_name = deal_table_values[2].get_text()
 deal_price = deal_table_values[3].get_text()
 deal_delivery = deal_table_values[4].get_text()
@@ -27,7 +27,7 @@ deal_content = soup.find(['div'], attrs={'class':re.compile(fr'.*{re.escape(deal
 pattern = re.compile(r'<[^>]+>')  # 모든 태그를 제거하는 패턴
 content_text = re.sub(pattern, '', str(deal_content))
 
-print(content_text)
+print(deal_mall_name)
 # content_pattern = re.compile(r'<[^>]+>')
 # matches = re.findall(content_pattern, re.sub(re.compile(r'<br\s*/?>'), '', str(deal_content)))
 # 정규표현식으로 가져온 내용을 리스트가 아닌 하나의 문자열로 결합하여 출력

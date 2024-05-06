@@ -27,7 +27,7 @@ connection = mysql.connector.connect(
 )
 
 # 최신 핫딜 가져오기
-def get_latest_hotdeals(cursor, limit=20):
+def get_latest_hotdeals(cursor, limit=10):
     cursor.execute("SELECT * FROM deals ORDER BY date DESC LIMIT %s", (limit,))
     return cursor.fetchall()
 
@@ -83,7 +83,7 @@ async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cursor.close()
 
     # 가져온 핫딜 정보를 메시지로 보내기
-    hotdeal_messages = [f"{hotdeal['title']}\n\t→ {hotdeal['deal_url']}" for hotdeal in hotdeals]
+    hotdeal_messages = [f"{hotdeal['title']} (등록일:{hotdeal['date']})\n\t→ {hotdeal['deal_url']}" for hotdeal in hotdeals]
     message_text = "\n".join(hotdeal_messages)
     await query.edit_message_text(text=message_text)
 

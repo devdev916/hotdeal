@@ -15,7 +15,7 @@ def crawl_hotdeal(source, headers):
     deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
     hotdeal_warehouse = []
 
-    for deal in deals[0:2]:
+    for deal in deals[0:6]:
         try:
             link = source + deal.find('a')['href']  # hotdeal별 링크 추출
             res = requests.get(link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
@@ -28,7 +28,7 @@ def crawl_hotdeal(source, headers):
             table = soup.find('table', attrs={'class':'hotdeal_table'}) # 핫딜 정보 테이블
             table_info = table.find_all('div', attrs={'class': 'xe_content'})
             deal_url = table_info[0].find('a', attrs={'class':'hotdeal_url'}).get_text() # 핫딜URL
-            mall_name = table_info[1].get_text().strip() # 핫딜 쇼핑몰
+            mall_name =re.sub(r"\[.*\]", "", table_info[1].get_text()).strip()
             product_name = table_info[2].get_text() # 핫딜 상품명
             price = table_info[3].get_text() # 핫딜 가격
             delivery = table_info[4].get_text() # 핫딜 배송
@@ -50,7 +50,7 @@ def crawl_hotdeal(source, headers):
                 'content': content
             })
             print(title)
-            time.sleep(120)
+            time.sleep(180)
         except IndexError:
             title = None
             category = None
