@@ -1,6 +1,7 @@
 import requests
 import re
 import time
+from datetime import datetime
 from bs4 import BeautifulSoup
 import mysql.connector
 
@@ -49,7 +50,7 @@ def crawl_hotdeal(source, headers):
                 'content': content
             })
             print(title)
-            time.sleep(90)
+            time.sleep(120)
         except IndexError:
             title = None
             category = None
@@ -67,6 +68,7 @@ def crawl_hotdeal(source, headers):
 def insert_into_mysql(hotdeals, connection):
     cursor = connection.cursor()
     for deal in hotdeals:
+        current_time = datetime.now().strftime('%Y/%m/%d %H:%M:%S')  # 현재 시간을 YYYY/MM/DD HH:MM:SS 포맷으로 가져옴
         # URL 값이 이미 존재하는지 확인하는 쿼리 실행
         cursor.execute("SELECT COUNT(*) FROM deals WHERE url = %s", (deal['url'],))
         result = cursor.fetchone()
@@ -74,8 +76,8 @@ def insert_into_mysql(hotdeals, connection):
         if result[0] > 0:
             continue
         # URL 값이 존재하지 않는 경우 데이터를 삽입
-        sql = "INSERT INTO deals (title, category, date, url, deal_url, mall_name, product_name, price, delivery, content) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-        val = (deal['title'], deal['category'], deal['date'], deal['url'], deal['deal_url'], deal['mall_name'], deal['product_name'], deal['price'], deal['delivery'], deal['content'])
+        sql = "INSERT INTO deals (title, category, date, url, deal_url, mall_name, product_name, price, delivery, content, insert_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        val = (deal['title'], deal['category'], deal['date'], deal['url'], deal['deal_url'], deal['mall_name'], deal['product_name'], deal['price'], deal['delivery'], deal['content'], current_time)
         cursor.execute(sql, val)
     connection.commit()
     cursor.close()
