@@ -3,11 +3,21 @@ import re
 import time
 from datetime import datetime
 from bs4 import BeautifulSoup
-import mysql.connector
-
+# import mysql.connector
+# headers = {
+#         'User-Agent':'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36'
+#     }
+# source = 'https://www.fmkorea.com'
+# url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc' # 핫딜 게시판 인기탭
+# res = requests.get(url, headers=headers, timeout=5)
+# res.raise_for_status()
+# soup = BeautifulSoup(res.text, 'lxml')
+# deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
+# hotdeal_warehouse = []
+# print(deals)
 
 def crawl_hotdeal(source, headers):
-    # source = 'https://www.fmkorea.com/'
+    # source = 'https://www.fmkorea.com'
     url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc' # 핫딜 게시판 인기탭
     res = requests.get(url, headers=headers, timeout=5)
     res.raise_for_status()
@@ -15,7 +25,7 @@ def crawl_hotdeal(source, headers):
     deals = soup.find_all('li', attrs={'class':re.compile('hotdeal0$')})
     hotdeal_warehouse = []
 
-    for deal in deals[0:6]:
+    for deal in deals[0:2]:
         try:
             link = source + deal.find('a')['href']  # hotdeal별 링크 추출
             res = requests.get(link, headers=headers, timeout=5)  # 해당 링크에 대한 요청
@@ -28,7 +38,7 @@ def crawl_hotdeal(source, headers):
             table = soup.find('table', attrs={'class':'hotdeal_table'}) # 핫딜 정보 테이블
             table_info = table.find_all('div', attrs={'class': 'xe_content'})
             deal_url = table_info[0].find('a', attrs={'class':'hotdeal_url'}).get_text() # 핫딜URL
-            mall_name =re.sub(r"\[.*\]", "", table_info[1].get_text()).strip()
+            mall_name =re.sub(r"\[.*\]", "", table_info[1].get_text()).strip() 
             product_name = table_info[2].get_text() # 핫딜 상품명
             price = table_info[3].get_text() # 핫딜 가격
             delivery = table_info[4].get_text() # 핫딜 배송
@@ -50,7 +60,7 @@ def crawl_hotdeal(source, headers):
                 'content': content
             })
             print(title)
-            time.sleep(180)
+            time.sleep(30)
         except IndexError:
             title = None
             category = None
