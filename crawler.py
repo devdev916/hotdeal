@@ -19,7 +19,7 @@ def crawl_hotdeal(source, url, chrome_option):
     hotdeal_bowl = []
 
     # 핫딜 게시글별 크롤링
-    for deal in deals[0:6]:
+    for deal in deals[0:21]:
         try:
             deal_link = source + deal.find('a')['href']  # 핫딜 링크 추출
             # Selenium #

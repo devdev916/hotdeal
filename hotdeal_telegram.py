@@ -1,5 +1,5 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler
+from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, CallbackQueryHandler, ConversationHandler, MessageHandler, filters
 import mysql.connector
 import asyncio
 import logging
@@ -8,9 +8,6 @@ import logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
 )
-# set higher logging level for httpx to avoid all GET and POST requests being logged
-logging.getLogger("httpx").setLevel(logging.WARNING)
-
 logger = logging.getLogger(__name__)
 
 # telegram 연결 설정 
@@ -26,80 +23,119 @@ connection = mysql.connector.connect(
     database="hotdeal"
 )
 
-# 최신 핫딜 가져오기
+# Constants for conversation states
+KEYWORD_STATE = 1
+
+# Function to fetch latest hot deals
 def get_latest_hotdeals(cursor, limit=10):
     cursor.execute("SELECT * FROM deals ORDER BY date DESC LIMIT %s", (limit,))
     return cursor.fetchall()
 
-# 키워드로 핫딜 가져오기
+# Function to fetch hot deals by keyword
 def get_hotdeals_by_keyword(cursor, keyword):
     cursor.execute("SELECT * FROM deals WHERE title LIKE %s", (f"%{keyword}%",))
     return cursor.fetchall()
 
-# 최신 핫딜 버튼 핸들러
-async def latest_hotdeal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    cursor = connection.cursor(dictionary=True)
-    hotdeals = get_latest_hotdeals(cursor)
-    cursor.close()
-    for hotdeal in hotdeals:
-        message = f"{hotdeal['title']}"
-        update.message.reply_text(message)
-
-# 키워드 핫딜 버튼 핸들러
-def keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    message = "핫딜 키워드를 입력하세요."
-    update.message.reply_text(message)
-
-# 키워드 입력 핸들러
-def keyword_input_handler(update, context):
+# Keyword input handler
+async def keyword_input_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyword = update.message.text
+
+    # Fetch hot deals by keyword
     cursor = connection.cursor(dictionary=True)
     hotdeals = get_hotdeals_by_keyword(cursor, keyword)
     cursor.close()
-    for deal in hotdeals:
-        message = f"{deal['title']}"
-        update.message.reply_text(message)
 
-# start 명령어 함수
+    # Send search results as message
+    hotdeal_messages = [f"{deal['title']} (등록일:{deal['date']})\n\t→ {deal['deal_url']}" for deal in hotdeals]
+    message_text = "\n".join(hotdeal_messages) if hotdeal_messages else "해당 키워드로 핫딜을 찾을 수 없습니다."
+    await update.message.reply_text(message_text)
+
+    # End conversation
+    return ConversationHandler.END
+
+# 최신 핫딜 버튼 핸들러
+# async def latest_hotdeal_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     cursor = connection.cursor(dictionary=True)
+#     hotdeals = get_latest_hotdeals(cursor)
+#     cursor.close()
+#     for hotdeal in hotdeals:
+#         message = f"{hotdeal['title']}"
+#         update.message.reply_text(message)
+
+# 키워드 핫딜 버튼 핸들러
+# def keyword_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+#     message = "핫딜 키워드를 입력하세요."
+#     update.message.reply_text(message)
+
+# 키워드 입력 핸들러
+# def keyword_input_handler(update, context):
+#     keyword = update.message.text
+#     cursor = connection.cursor(dictionary=True)
+#     hotdeals = get_hotdeals_by_keyword(cursor, keyword)
+#     cursor.close()
+#     for deal in hotdeals:
+#         message = f"{deal['title']}"
+#         update.message.reply_text(message)
+
+
+# Start command handler
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # 버튼 생성
     keyboard = [
         [InlineKeyboardButton("최신 핫딜", callback_data='latest_hotdeal')],
         [InlineKeyboardButton("키워드 검색", callback_data='keyword')],
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # 채팅방으로 버튼 전송
     await update.message.reply_text("핫딜공유방 입장을 환영합니다.\n버튼을 선택해 주세요.", reply_markup=reply_markup)
 
-async def button(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # 콜백 정보 저장
+
+# Callback handler for buttons
+async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    # 사용자가 누른 버튼의 콜백 데이터 가져오기
     await query.answer()
 
-    # DB에서 최신 핫딜 가져오기
-    cursor = connection.cursor(dictionary=True)
-    hotdeals = get_latest_hotdeals(cursor)
-    cursor.close()
+    if query.data == 'latest_hotdeal':
+        cursor = connection.cursor(dictionary=True)
+        hotdeals = get_latest_hotdeals(cursor)
+        cursor.close()
 
-    # 가져온 핫딜 정보를 메시지로 보내기
-    hotdeal_messages = [f"{hotdeal['title']} (등록일:{hotdeal['date']})\n\t→ {hotdeal['deal_url']}" for hotdeal in hotdeals]
-    message_text = "\n".join(hotdeal_messages)
-    await query.edit_message_text(text=message_text)
+        hotdeal_messages = [f"{hotdeal['title']} (등록일:{hotdeal['date']})\n\t→ {hotdeal['deal_url']}" for hotdeal in hotdeals]
+        message_text = "\n".join(hotdeal_messages) if hotdeal_messages else "최신 핫딜을 찾을 수 없습니다."
+        await query.edit_message_text(text=message_text)
 
-    # await query.edit_message_text(text=f"Selected option: {query.data}")
+    elif query.data == 'keyword':
+        await query.message.reply_text("검색하려는 키워드를 입력해주세요.")
+        context.user_data['awaiting_keyword'] = True
 
+# Handler to process keyword input
+async def process_keyword(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if context.user_data.get('awaiting_keyword'):
+        keyword = update.message.text
+        cursor = connection.cursor(dictionary=True)
+        hotdeals = get_hotdeals_by_keyword(cursor, keyword)
+        cursor.close()
+
+        hotdeal_messages = [f"{deal['title']} (등록일:{deal['date']})\n\t→ {deal['deal_url']}" for deal in hotdeals]
+        message_text = "\n".join(hotdeal_messages) if hotdeal_messages else "해당 키워드로 핫딜을 찾을 수 없습니다."
+        await update.message.reply_text(message_text)
+
+        # Reset keyword awaiting state
+        context.user_data['awaiting_keyword'] = False
+        
+# Main function
 if __name__ == '__main__':
-
-    # 챗봇 application 인스턴스 생성
     application = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
-    # start 핸들러
+
+    # Handlers
     start_handler = CommandHandler('start', start)
-    # start 핸들러 추가
+    button_handler = CallbackQueryHandler(button_handler)
+    keyword_input_handler = MessageHandler(filters.TEXT & ~filters.COMMAND, process_keyword)
+
+    # Add handlers to application
     application.add_handler(start_handler)
-    # 콜백 핸들러 추가
-    application.add_handler(CallbackQueryHandler(button))
-    # 폴링 방식으로 실행
+    application.add_handler(button_handler)
+    application.add_handler(keyword_input_handler)
+
+    # Run bot
     application.run_polling()
 
 # 버튼 메뉴 만들기
