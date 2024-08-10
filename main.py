@@ -7,7 +7,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 # 크롤링할 웹사이트 정보
 source = 'https://www.fmkorea.com'
-url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc'
+base_url = f'{source}/index.php?mid=hotdeal&sort_index=pop&order_type=desc'
 
 # MySQL 연결 설정
 connection = mysql.connector.connect(
@@ -29,7 +29,7 @@ chrome_option.add_argument(f'--user-agent={user_agent["User-Agent"]}')
 chrome_option.add_argument("--disable-gpu")
 
 # 핫딜 데이터 가져오기
-hotdeals = crawl_hotdeal(source, url, chrome_option)
+hotdeals = crawl_hotdeal(source, base_url, chrome_option)
 
 # MySQL에 데이터 삽입
 insert_into_mysql(hotdeals, connection)
