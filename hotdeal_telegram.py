@@ -46,7 +46,7 @@ async def keyword_input_handler(update: Update, context: ContextTypes.DEFAULT_TY
     cursor.close()
 
     # Send search results as message
-    hotdeal_messages = [f"{deal['title']} (등록일:{deal['date']})\n\t→ {deal['deal_url']}" for deal in hotdeals]
+    hotdeal_messages = [f"{deal['title']} (등록일:{deal['date']})\n\t→ {deal['deal_url']}\n" for deal in hotdeals]
     message_text = "\n".join(hotdeal_messages) if hotdeal_messages else "해당 키워드로 핫딜을 찾을 수 없습니다."
     await update.message.reply_text(message_text)
 
