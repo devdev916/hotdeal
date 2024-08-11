@@ -29,7 +29,7 @@ chrome_option.add_argument(f'--user-agent={user_agent["User-Agent"]}')
 chrome_option.add_argument("--disable-gpu")
 
 # 핫딜 데이터 가져오기
-hotdeals = crawl_hotdeal(source, base_url, chrome_option)
+hotdeals = crawl_hotdeal(source, base_url, chrome_option, connection)
 
 # MySQL에 데이터 삽입
 insert_into_mysql(hotdeals, connection)
