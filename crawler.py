@@ -31,7 +31,7 @@ def crawl_page(url, browser):
 def extract_deal_info(deals, source, existing_urls, browser):
     """ 각 딜을 처리하여 필요한 정보만 추출합니다. """
     hotdeal_bowl = []
-    for deal in deals[:3]:
+    for deal in deals:
         try:
             full_deal_link = source + deal.find('a')['href']  # 핫딜 링크 추출
             deal_link = re.search(r'document_srl=(\d+)&', full_deal_link).group(1)
@@ -94,7 +94,7 @@ def crawl_hotdeal(source, base_url, browser, connection):
     existing_urls = get_existing_urls(connection)
     hotdeal_bowl = []
 
-    for page in range(1, 2):  # 페이지 범위는 필요에 따라 조정
+    for page in range(1, 11):  # 페이지 범위는 필요에 따라 조정
         url = f"{base_url}&page={page}"
         deals = crawl_page(url, browser)
         hotdeal_bowl.extend(extract_deal_info(deals, source, existing_urls, browser))
